@@ -1,0 +1,249 @@
+---
+title: "End-to-end RepliAPA workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{End-to-end RepliAPA workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 4.8,
+  dpi = 120
+)
+```
+
+RepliAPA starts after poly(A) sites have been detected and counted. It does not
+read FASTQ files or call PASs. The required inputs are a PAS-by-cell count
+matrix, cell metadata containing guide and biological-replicate assignments,
+and PAS metadata containing a PAS-to-gene map.
+
+The inferential hierarchy is fixed throughout this workflow:
+
+```text
+cell -> guide by biological-replicate pseudobulk -> guide -> target
+```
+
+Cells improve measurement precision. They are never treated as independent
+biological replicates.
+
+## Standardize the input
+
+`repliapa_read_pas_counts()` accepts a matrix directly and also reads Seurat,
+SingleCellExperiment, and SummarizedExperiment containers. A container assay
+must be named explicitly so that an RNA assay cannot accidentally be analysed
+as PAS counts.
+
+```{r input}
+library(RepliAPA)
+
+example <- repliapa_example()
+
+# Expand each deterministic example pseudobulk into two synthetic cells only
+# to demonstrate count-conserving cell-to-guide aggregation.
+cell_counts <- do.call(cbind, lapply(seq_len(ncol(example$counts)), function(i) {
+  first <- example$counts[, i] %/% 2L
+  second <- example$counts[, i] - first
+  cbind(first, second)
+}))
+cell_ids <- paste0("cell", seq_len(ncol(cell_counts)))
+colnames(cell_counts) <- cell_ids
+
+cell_data <- example$sample_data[
+  rep(seq_len(nrow(example$sample_data)), each = 2L), , drop = FALSE
+]
+cell_data$cell_line <- "HEK293FT"
+rownames(cell_data) <- cell_ids
+
+input <- repliapa_read_pas_counts(
+  cell_counts,
+  cell_data = cell_data,
+  pas_data = example$pas_data
+)
+input
+```
+
+Equivalent container calls are:
+
+```{r container-examples, eval=FALSE}
+seurat_input <- repliapa_read_pas_counts(
+  seurat_object,
+  assay = "polyA",
+  layer = "counts"
+)
+
+sce_input <- repliapa_read_pas_counts(
+  sce_object,
+  assay = "polyA"
+)
+
+se_input <- repliapa_read_pas_counts(
+  summarized_experiment,
+  assay = "polyA"
+)
+```
+
+The reader validates non-negative integer counts and aligns metadata by cell
+and PAS identifiers. It does not guess the PAS assay.
+
+## Aggregate cells without losing counts
+
+```{r pseudobulk}
+pb <- repliapa_pseudobulk(
+  input$counts,
+  input$cell_data,
+  cell_line = "cell_line",
+  replicate = "replicate",
+  guide = "guide",
+  target = "target",
+  ntc = "ntc"
+)
+
+stopifnot(sum(pb$counts) == sum(input$counts))
+pb$sample_data
+```
+
+The columns of `pb$counts` are now guide-by-biological-replicate sample units.
+`cell_n` records the number of cells contributing to each unit but does not
+create additional inferential degrees of freedom.
+
+## Audit the data contract before fitting
+
+Adequacy thresholds must be chosen from development data and frozen before
+validation. The low thresholds below are appropriate only for this tiny
+interface example.
+
+```{r audit}
+audit <- repliapa_audit_input(
+  pb$counts,
+  pb$sample_data,
+  input$pas_data,
+  development_replicates = "R1",
+  min_cells = 1L,
+  min_polya_count = 1L,
+  min_target_guides = 2L,
+  usable_total = 1L,
+  usable_nonzero = 1L,
+  strong_total = 20L,
+  strong_nonzero = 2L
+)
+audit
+audit$target_support
+audit$gene_adequacy
+```
+
+Unsupported targets and genes remain in the accounting tables. Do not lower
+thresholds after inspecting a frozen replicate.
+
+## Fit an all-PAS target effect
+
+```{r fit}
+fit <- repliapa_fit(
+  pb$counts,
+  pb$sample_data,
+  input$pas_data,
+  target = "T1"
+)
+fit
+head(fit$gene_table)
+head(fit$pas_effects)
+```
+
+The gene table contains the global all-PAS test. `pas_effects` localizes the
+estimated composition change; a gene-global P value does not make each PAS
+component separately significant.
+
+```{r fit-plots}
+repliapa_plot_pas_effect(fit, "GENE_A", input$pas_data)
+repliapa_plot_guide_evidence(fit, "GENE_A")
+```
+
+## Check guide-unit null calibration
+
+NTC calibration relabels whole NTC guides and retains their replicate blocks.
+It never splits the cells belonging to one guide.
+
+```{r null-calibration}
+null <- repliapa_ntc_calibration(
+  pb$counts,
+  pb$sample_data,
+  input$pas_data,
+  guide_sizes = 2L,
+  n_contrasts = 2L,
+  seed = 1L
+)
+null$summary
+repliapa_plot_calibration(null)
+```
+
+## Validate in a separately fitted replicate
+
+```{r replicate-validation}
+development <- repliapa_fit(
+  pb$counts, pb$sample_data, input$pas_data,
+  target = "T1", replicates = "R1"
+)
+validation <- repliapa_fit(
+  pb$counts, pb$sample_data, input$pas_data,
+  target = "T1", replicates = "R2"
+)
+replication <- repliapa_reproducibility(development, validation)
+attr(replication, "summary")
+repliapa_plot_reproducibility(replication, label_n = 2L)
+```
+
+Real analyses must designate development and validation replicates before
+looking at validation outcomes. Random cell splits are not biological-
+replicate validation.
+
+## Compare all-PAS with proximal/distal representation
+
+```{r allpas-versus-two-bin}
+pd_fit <- repliapa_fit_proximal_distal(
+  pb$counts,
+  pb$sample_data,
+  input$pas_data,
+  target = "T1"
+)
+representation <- repliapa_compare_allpas_pd(fit, pd_fit)
+attr(representation, "accounting")
+repliapa_plot_allpas(representation)
+```
+
+The same guides and testing engine are used; only the PAS representation
+changes. All-PAS-only evidence still requires replicate and guide support.
+
+## Create a verified result bundle
+
+```{r bundle}
+bundle <- repliapa_result_bundle(fit, input_audit = audit)
+repliapa_verify_contract(bundle = bundle)
+```
+
+```{r write-bundle, eval=FALSE}
+repliapa_write_bundle(bundle, "repliapa_results")
+repliapa_verify_bundle("repliapa_results")
+```
+
+The bundle records tested, filtered and abstained genes and writes SHA256
+checksums. Runtime and memory remain `NOT_INSTRUMENTED` unless real external
+measurements are supplied.
+
+## Interpretation checklist
+
+Before reporting a target-by-gene result, check that:
+
+1. the PAS assay and PAS-to-gene map are explicit;
+2. cells were aggregated to guide-by-replicate units;
+3. the target has multiple independent guides;
+4. the finite allocation count provides useful P-value resolution;
+5. a frozen biological replicate supports the direction;
+6. different guides do not show unexplained discordance;
+7. all-PAS added value is compared with a matched proximal/distal summary;
+8. total gene expression is reported separately;
+9. filtered and abstained hypotheses remain visible.
+

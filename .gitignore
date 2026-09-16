@@ -1,0 +1,14 @@
+.Rhistory
+.RData
+.Ruserdata
+.Renviron
+.Rprofile
+.Rproj.user/
+*.Rcheck/
+*.tar.gz
+*.zip
+.DS_Store
+*.pem
+*.key
+.env
+.env.*

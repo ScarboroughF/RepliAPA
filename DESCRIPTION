@@ -1,0 +1,40 @@
+Package: RepliAPA
+Title: Replicate-Aware Inference for Alternative Polyadenylation
+Version: 0.99.0
+Authors@R: person(given = "Wei", family = "Xu",
+    email = "xw222300@163.com", role = c("aut", "cre", "cph"))
+Description: Transparent guide- and replicate-aware inference for changes in
+    alternative polyadenylation composition. The package aggregates cell-level
+    polyadenylation counts to biological sample units, estimates equal-guide
+    all-site composition effects, performs exhaustive guide-identity permutation
+    tests while preserving replicate blocks, calibrates inference with
+    guide-unit non-targeting contrasts, and reports gene-expression effects,
+    guide heterogeneity, cross-context robustness, post-freeze orthogonal
+    direction support, strong-baseline interoperability, pre-fit input
+    adequacy, checksum-protected result bundles, measured compute provenance
+    and abstention explicitly. A fingerprinted v1-candidate contract freezes
+    exported signatures, S3 result components, result-table schemas, and
+    compatibility policy for auditable downstream integrations.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends: R (>= 4.2.0)
+Imports:
+    digest,
+    Matrix,
+    methods,
+    stats,
+    utils
+Suggests:
+    ggplot2 (>= 3.4.0),
+    knitr,
+    rmarkdown,
+    SeuratObject,
+    SingleCellExperiment,
+    SummarizedExperiment,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Config/RepliAPA/Release-Candidate: v1.0.0-rc4
+Config/RepliAPA/Release-Scope: local-only

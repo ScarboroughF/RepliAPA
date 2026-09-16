@@ -1,0 +1,180 @@
+---
+title: "Visualizing RepliAPA results"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Visualizing RepliAPA results}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 4.8,
+  dpi = 120
+)
+```
+
+RepliAPA plots preserve the inferential hierarchy of the fitted analysis.
+Cells improve measurement precision, while guide by biological-replicate
+pseudobulks remain the evidence units. Plot functions never convert cells into
+independent replicates or rerun model fitting.
+
+Every plotting function returns a standard `ggplot` object. You can add themes,
+annotations, facets, or save the result with `ggplot2::ggsave()`.
+
+## Fit a deterministic example
+
+```{r example-fit}
+library(RepliAPA)
+
+x <- repliapa_example()
+fit <- repliapa_fit(
+  x$counts,
+  x$sample_data,
+  x$pas_data,
+  target = "T1"
+)
+fit
+```
+
+The example is an interface demonstration, not evidence for method
+performance.
+
+## Target-level all-PAS signature
+
+`repliapa_plot_pas_effect()` shows the target-level change in PAS usage. A
+positive value means increased relative usage of that PAS; a negative value
+means decreased usage. Replicate-specific estimates are retained as separate
+markers.
+
+```{r pas-effect}
+repliapa_plot_pas_effect(fit, "GENE_A", x$pas_data)
+```
+
+This is a composition effect, not a total gene-expression fold change. The PAS
+effects for a gene sum to zero up to numerical tolerance.
+
+## Guide by replicate evidence
+
+`repliapa_plot_guide_evidence()` displays every targeting guide within every
+biological replicate relative to the replicate-matched NTC composition.
+
+```{r guide-evidence}
+repliapa_plot_guide_evidence(fit, "GENE_A")
+```
+
+A visually strong target effect supported by only one row should be inspected
+for guide heterogeneity rather than described as target-wide evidence.
+
+## Guide-unit null calibration
+
+Null calibration relabels whole NTC guides. It never splits the cells belonging
+to one guide.
+
+```{r calibration}
+null <- repliapa_ntc_calibration(
+  x$counts,
+  x$sample_data,
+  x$pas_data,
+  guide_sizes = 2L,
+  n_contrasts = 2L,
+  seed = 1L
+)
+repliapa_plot_calibration(null)
+```
+
+The diagonal represents nominal calibration. The shaded interval is a
+pointwise approximation for the observed rejection fraction, not a confidence
+interval for a biological effect.
+
+## Frozen biological-replicate validation
+
+Fit development and validation replicates independently before comparing them.
+
+```{r reproducibility}
+development <- repliapa_fit(
+  x$counts, x$sample_data, x$pas_data, "T1", replicates = "R1"
+)
+validation <- repliapa_fit(
+  x$counts, x$sample_data, x$pas_data, "T1", replicates = "R2"
+)
+replication <- repliapa_reproducibility(development, validation)
+repliapa_plot_reproducibility(replication, label_n = 2L)
+```
+
+The diagonal shows equal evidence strength. It is not a regression line and
+does not turn the two replicates into technical duplicates.
+
+## All-PAS versus proximal/distal representation
+
+The fair two-bin comparison uses the same guides and test engine. Only the PAS
+representation changes.
+
+```{r allpas}
+pd_fit <- repliapa_fit_proximal_distal(
+  x$counts, x$sample_data, x$pas_data, "T1"
+)
+representation <- repliapa_compare_allpas_pd(fit, pd_fit)
+repliapa_plot_allpas(representation)
+```
+
+An all-PAS-only point is not automatically a true biological discovery. It
+still requires replicate direction, guide support, and tested-universe
+accounting.
+
+## Keep APA and gene expression separate
+
+```{r apa-ge}
+gene_expression <- data.frame(
+  gene = fit$gene_table$gene,
+  log2FC = c(0.05, 0.55, -0.10)
+)
+classification <- repliapa_classify_effects(fit, gene_expression)
+repliapa_plot_apa_ge(classification, label_n = 3L)
+```
+
+The horizontal axis represents total gene expression. The vertical axis
+represents redistribution among PAS. Neither quantity is used to impute the
+other.
+
+## Publication export
+
+```{r export, eval=FALSE}
+p <- repliapa_plot_pas_effect(fit, "GENE_A", x$pas_data)
+
+ggplot2::ggsave(
+  "GENE_A_pas_effect.pdf",
+  p,
+  width = 8,
+  height = 5,
+  device = grDevices::cairo_pdf
+)
+
+ggplot2::ggsave(
+  "GENE_A_pas_effect.png",
+  p,
+  width = 8,
+  height = 5,
+  dpi = 360,
+  bg = "white"
+)
+```
+
+Use PDF or SVG for editable vector artwork and a 300--600 DPI PNG for journal
+submission systems that require raster figures.
+
+## Plot-selection guide
+
+| Scientific question | Function |
+|---|---|
+| Which PAS gain or lose usage? | `repliapa_plot_pas_effect()` |
+| Is the effect supported by multiple guides and replicates? | `repliapa_plot_guide_evidence()` |
+| Are null P values calibrated at the guide unit? | `repliapa_plot_calibration()` |
+| Does a frozen biological replicate support the result? | `repliapa_plot_reproducibility()` |
+| What information is lost by two-bin summarization? | `repliapa_plot_allpas()` |
+| Is an effect shared across independently fitted contexts? | `repliapa_plot_context()` |
+| Is the result APA-only, GE-only, both, or neither? | `repliapa_plot_apa_ge()` |
+

@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use RepliAPA, please cite the software and its associated method paper."
+title: "RepliAPA: Replicate-Aware Inference for Alternative Polyadenylation"
+type: software
+authors:
+  - family-names: "Xu"
+    given-names: "Wei"
+    email: "xw222300@163.com"
+version: 0.99.0
+license: MIT
+abstract: >-
+  RepliAPA provides guide- and replicate-aware target-level inference for
+  multi-PAS compositional responses in single-cell perturbation screens.
