@@ -12,10 +12,10 @@ RepliAPA starts from an existing PAS-by-cell count matrix. It does **not** read
 FASTQ files, detect PASs, perform guide assignment, or treat cells as
 independent biological replicates.
 
-> **Release status:** version 0.99.0 is a pre-release candidate prepared for
-> repository publication. The archived source package previously passed
-> `R CMD check --no-manual` with 0 errors, 0 warnings and 0 notes. Public repository,
-> release and archive identifiers are pending; no published release is implied.
+> **Release status:** version 0.99.0 is a pre-release candidate in the private
+> repository https://github.com/ScarboroughF/RepliAPA. The archived source package
+> previously passed `R CMD check --no-manual` with 0 errors, 0 warnings and 0 notes.
+> Public access, an immutable release tag and an archive DOI remain pending.
 
 ## Why RepliAPA?
 
@@ -86,12 +86,14 @@ RepliAPA is implemented in R and does not require a compiled backend.
 
 ### From GitHub
 
-After the repository is public, replace `GITHUB_OWNER` with the actual account:
+The repository currently requires access granted by its owner. Authenticate
+using your own GitHub credentials; never put passwords or tokens in scripts.
+After the repository is public, installation will not require private access.
 
 ```r
 install.packages("remotes")
 remotes::install_github(
-  "GITHUB_OWNER/RepliAPA",
+  "ScarboroughF/RepliAPA",
   build_vignettes = TRUE
 )
 ```
@@ -101,13 +103,13 @@ moving default branch:
 
 ```r
 remotes::install_github(
-  "GITHUB_OWNER/RepliAPA@v0.99.0",
+  "ScarboroughF/RepliAPA@v0.99.0",
   build_vignettes = TRUE
 )
 ```
 
-`GITHUB_OWNER` and `v0.99.0` are the planned repository owner and version tag;
-replace the owner and use the tag only after it has actually been published.
+`v0.99.0` is the planned version tag; the tagged installation command above
+will work only after that tag has actually been published.
 
 ### From the checked source archive
 
@@ -566,9 +568,9 @@ configuration and figure source data must be deposited in a DOI-issuing archive
 before submission:
 
 ```text
-Source repository: TO_BE_ADDED
-Immutable release: TO_BE_ADDED
-Archive DOI:       TO_BE_ADDED
+Source repository: https://github.com/ScarboroughF/RepliAPA (currently private)
+Immutable release: PENDING
+Archive DOI:       PENDING
 ```
 
 ## Citation

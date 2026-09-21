@@ -5,6 +5,7 @@ bibentry(
   title = "RepliAPA: Replicate-Aware Inference for Alternative Polyadenylation",
   author = person(given = "Wei", family = "Xu"),
   year = "2026",
-  note = "R package version 0.99.0 (local v1.0.0-rc4 candidate)",
+  note = "R package version 0.99.0 (pre-release candidate)",
+  url = "https://github.com/ScarboroughF/RepliAPA",
   email = "xw222300@163.com"
 )

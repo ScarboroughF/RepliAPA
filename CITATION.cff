@@ -2,6 +2,7 @@ cff-version: 1.2.0
 message: "If you use RepliAPA, please cite the software and its associated method paper."
 title: "RepliAPA: Replicate-Aware Inference for Alternative Polyadenylation"
 type: software
+repository-code: "https://github.com/ScarboroughF/RepliAPA"
 authors:
   - family-names: "Xu"
     given-names: "Wei"
