@@ -12,10 +12,10 @@ RepliAPA starts from an existing PAS-by-cell count matrix. It does **not** read
 FASTQ files, detect PASs, perform guide assignment, or treat cells as
 independent biological replicates.
 
-> **Release status:** version 0.99.0 is a pre-release candidate in the private
+> **Release status:** version 0.99.0 is a pre-release candidate in the public
 > repository https://github.com/ScarboroughF/RepliAPA. The archived source package
 > previously passed `R CMD check --no-manual` with 0 errors, 0 warnings and 0 notes.
-> Public access, an immutable release tag and an archive DOI remain pending.
+> The versioned release is `v0.99.0`; an archive DOI remains pending.
 
 ## Why RepliAPA?
 
@@ -86,9 +86,7 @@ RepliAPA is implemented in R and does not require a compiled backend.
 
 ### From GitHub
 
-The repository currently requires access granted by its owner. Authenticate
-using your own GitHub credentials; never put passwords or tokens in scripts.
-After the repository is public, installation will not require private access.
+The public repository is available at https://github.com/ScarboroughF/RepliAPA.
 
 ```r
 install.packages("remotes")
@@ -108,8 +106,8 @@ remotes::install_github(
 )
 ```
 
-`v0.99.0` is the planned version tag; the tagged installation command above
-will work only after that tag has actually been published.
+Release notes and the installable R source archive are provided at
+https://github.com/ScarboroughF/RepliAPA/releases/tag/v0.99.0.
 
 ### From the checked source archive
 
@@ -568,8 +566,8 @@ configuration and figure source data must be deposited in a DOI-issuing archive
 before submission:
 
 ```text
-Source repository: https://github.com/ScarboroughF/RepliAPA (currently private)
-Immutable release: PENDING
+Source repository: https://github.com/ScarboroughF/RepliAPA
+Versioned release: https://github.com/ScarboroughF/RepliAPA/releases/tag/v0.99.0
 Archive DOI:       PENDING
 ```
 

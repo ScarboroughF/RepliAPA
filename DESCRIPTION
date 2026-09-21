@@ -39,4 +39,4 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/RepliAPA/Release-Candidate: v1.0.0-rc4
-Config/RepliAPA/Release-Scope: private-repository-candidate
+Config/RepliAPA/Release-Scope: public-pre-release
